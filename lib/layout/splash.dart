@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:tel_chat/data/auth.dart';
+import 'package:tel_chat/helper/const.dart';
+import 'package:tel_chat/layout/home.dart';
 import 'package:tel_chat/layout/signin.dart';
 
 class Splash extends StatefulWidget {
@@ -16,14 +20,20 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
   Animation<double>? _fadeAnimation;
   Animation<Offset>? _translateAnimation;
   late ConfettiController _controllerBottomCenter;
+  // late String initroute=signin;
 
   Future<void> navigatToNextScreen() async {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => const SignIn(),
-      ),
+    FutureBuilder(
+      future: AuthMethods().getCurrentUser(),
+      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+        if (snapshot.hasData) {
+          return const HomeScreen();
+        } else {
+          return const SignIn();
+        }
+      },
     );
+    // Navigator.pushReplacementNamed(context, signin);
   }
 
   @override
@@ -90,16 +100,16 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                     height: 70, //
                     child: ConfettiWidget(
                       blastDirectionality: BlastDirectionality
-                  .explosive, // don't specify a direction, blast randomly
-              shouldLoop:
-                  true, // start again as soon as the animation is finished
-              colors: const [
-                Colors.green,
-                Colors.blue,
-                Colors.pink,
-                Colors.orange,
-                Colors.purple
-              ], // manually specify the colors to be used
+                          .explosive, // don't specify a direction, blast randomly
+                      shouldLoop:
+                          true, // start again as soon as the animation is finished
+                      colors: const [
+                        Colors.green,
+                        Colors.blue,
+                        Colors.pink,
+                        Colors.orange,
+                        Colors.purple
+                      ], // manually specify the colors to be used
                       confettiController: _controllerBottomCenter,
                       child: const Text(
                         'Chat Clone',

@@ -8,4 +8,10 @@ class DataBaseMethods {
         .doc(userId)
         .set(userInfoMap);
   }
+
+ Future<Stream<QuerySnapshot>>? getuserbyUserName(String username)async {
+  return  FirebaseFirestore.instance
+        .collection("users")
+        .where("username", isEqualTo: username).snapshots();
+  }
 }

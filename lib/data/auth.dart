@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tel_chat/data/database.dart';
 import 'package:tel_chat/helper/sharedpref_helper.dart';
 import 'package:tel_chat/layout/home.dart';
@@ -9,8 +9,8 @@ import 'package:tel_chat/layout/home.dart';
 class AuthMethods {
   final FirebaseAuth auth = FirebaseAuth.instance;
 
-  getCurrentUser() {
-    return auth.currentUser;
+  getCurrentUser() async {
+    return await auth.currentUser;
   }
 
   signInWithGoogle(BuildContext context) async {
@@ -56,5 +56,11 @@ class AuthMethods {
         );
       });
     }
+  }
+
+ Future signout() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    preferences.clear();
+  await  auth.signOut();
   }
 }
