@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:tel_chat/data/auth.dart';
+
+import '../data/auth.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({Key? key}) : super(key: key);
 
   @override
-  State<SignIn> createState() => _SignInState();
+  _SignInState createState() => _SignInState();
 }
 
 class _SignInState extends State<SignIn> {
@@ -13,21 +14,21 @@ class _SignInState extends State<SignIn> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Clone'),
+        title: const Text("Messenger Clone"),
       ),
       body: Center(
-        child: InkWell(
+        child: GestureDetector(
           onTap: () {
             AuthMethods().signInWithGoogle(context);
           },
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.red,
+              borderRadius: BorderRadius.circular(24),
+              color: const Color(0xffDB4437),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: const Text(
-              'Sign In With Google',
+              "Sign In with Google",
               style: TextStyle(fontSize: 16, color: Colors.white),
             ),
           ),

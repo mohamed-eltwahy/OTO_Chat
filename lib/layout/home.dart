@@ -1,148 +1,207 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:tel_chat/data/auth.dart';
-import 'package:tel_chat/data/database.dart';
-import 'package:tel_chat/helper/const.dart';
 import 'package:tel_chat/layout/chat_screen.dart';
+import 'package:tel_chat/layout/signin.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+import '../data/auth.dart';
+import '../data/database.dart';
+import '../helper/sharedpref_helper.dart';
+
+class Home extends StatefulWidget {
+  const Home({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  _HomeState createState() => _HomeState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeState extends State<Home> {
   bool isSearching = false;
-  Stream? usersStream;
-  TextEditingController searchTextEditingController = TextEditingController();
-  onsearchedBtnClicked() async {
-    setState(() {
-      isSearching = true;
-    });
-    usersStream = await DataBaseMethods()
-        .getuserbyUserName(searchTextEditingController.text);
+  String? myName, myProfilePic, myUserName, myEmail;
+  Stream? usersStream, chatRoomsStream;
+
+  TextEditingController searchUsernameEditingController =
+      TextEditingController();
+
+  getMyInfoFromSharedPreference() async {
+    myName = (await SharedPreferenceHelper().getDisplayName())!;
+    myProfilePic = (await SharedPreferenceHelper().getUserProfileUrl())!;
+    myUserName = (await SharedPreferenceHelper().getUserName())!;
+    myEmail = (await SharedPreferenceHelper().getUserEmail())!;
+    setState(() {});
   }
 
-  Widget searchUserList() {
+  getChatRoomIdByUsernames(String a, String b) {
+    if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
+      return "$b _$a";
+    } else {
+      return "$a _$b";
+    }
+  }
+
+  onSearchBtnClick() async {
+    isSearching = true;
+    setState(() {});
+    usersStream = await DatabaseMethods()
+        .getUserByUserName(searchUsernameEditingController.text);
+
+    setState(() {});
+  }
+
+  Widget chatRoomsList() {
+    return StreamBuilder(
+      stream: chatRoomsStream,
+      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+        return snapshot.hasData
+            ? ListView.builder(
+                itemCount: snapshot.data.docs.length,
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  DocumentSnapshot ds = snapshot.data.docs[index];
+                  return ChatRoomListTile(
+                      ds["lastMessage"], ds.id, myUserName!);
+                })
+            : const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
+  Widget searchListUserTile(
+      {required String profileUrl, name, username, email}) {
+    return GestureDetector(
+      onTap: () async {
+        var chatRoomId = await getChatRoomIdByUsernames(myUserName!, username);
+        Map<String, dynamic> chatRoomInfoMap = {
+          "users": [myUserName, username]
+        };
+        DatabaseMethods().createChatRoom(chatRoomId, chatRoomInfoMap);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ChatScreen(username, name)));
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: Image.network(
+                profileUrl,
+                height: 40,
+                width: 40,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [Text(name), Text(email)])
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget searchUsersList() {
     return StreamBuilder(
       stream: usersStream,
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
         return snapshot.hasData
             ? ListView.builder(
-                shrinkWrap: true,
                 itemCount: snapshot.data.docs.length,
+                shrinkWrap: true,
                 itemBuilder: (context, index) {
                   DocumentSnapshot ds = snapshot.data.docs[index];
-                  return searchedUserTile(
-                      ds['imgUrl'], ds['name'], ds['email'], ds['username']);
-                })
-            : const CircularProgressIndicator();
+                  return searchListUserTile(
+                      profileUrl: ds["imgUrl"],
+                      name: ds["name"],
+                      email: ds["email"],
+                      username: ds["username"]);
+                },
+              )
+            : const Center(
+                child: CircularProgressIndicator(),
+              );
       },
     );
   }
 
-  Widget searchedUserTile(String imgUrl, name, username, email) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: ((context) => ChatScreen(
-                  chatWithUsername: username,
-                  username: name,
-                )),
-          ),
-        );
-      },
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: Image.network(
-              imgUrl,
-              height: 50,
-              width: 50,
-            ),
-          ),
-          const SizedBox(
-            width: 20,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name),
-              Text(email),
-            ],
-          )
-        ],
-      ),
-    );
+  getChatRooms() async {
+    chatRoomsStream = await DatabaseMethods().getChatRooms();
+    setState(() {});
   }
 
-  Widget chatRoomsList() {
-    return Container();
+  onScreenLoaded() async {
+    await getMyInfoFromSharedPreference();
+    getChatRooms();
+    chatRoomsList();
+  }
+
+  @override
+  void initState() {
+    onScreenLoaded();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Users'),
+        title: const Text("Messenger Clone"),
         actions: [
           InkWell(
             onTap: () {
-              AuthMethods().signout().then((f) {
-                Navigator.pushReplacementNamed(context, signin);
+              AuthMethods().signOut().then((s) {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => const SignIn()));
               });
             },
             child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: const Icon(Icons.exit_to_app)),
           )
         ],
       ),
       body: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(children: [
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        child: ListView(
+          children: [
             Row(
               children: [
                 isSearching
                     ? GestureDetector(
                         onTap: () {
-                          setState(() {
-                            isSearching = false;
-                            searchTextEditingController.text = '';
-                          });
+                          isSearching = false;
+                          searchUsernameEditingController.text = "";
+                          setState(() {});
                         },
                         child: const Padding(
-                          padding: EdgeInsets.only(right: 10),
-                          child: Icon(Icons.arrow_back),
-                        ),
+                            padding: EdgeInsets.only(right: 12),
+                            child: Icon(Icons.arrow_back)),
                       )
                     : Container(),
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    margin: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                         border: Border.all(
-                            color: Colors.black87,
-                            width: 1.0,
+                            color: Colors.grey,
+                            width: 1,
                             style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(30)),
+                        borderRadius: BorderRadius.circular(24)),
                     child: Row(
                       children: [
                         Expanded(
                             child: TextField(
-                          controller: searchTextEditingController,
+                          controller: searchUsernameEditingController,
                           decoration: const InputDecoration(
-                              border: InputBorder.none, hintText: 'username '),
+                              border: InputBorder.none, hintText: "username"),
                         )),
                         GestureDetector(
                             onTap: () {
-                              if (searchTextEditingController.text != "") {
-                                onsearchedBtnClicked();
+                              if (searchUsernameEditingController.text != "") {
+                                onSearchBtnClick();
                               }
                             },
                             child: const Icon(Icons.search))
@@ -152,8 +211,82 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            isSearching ? searchUserList() : chatRoomsList()
-          ])),
+            // isSearching ? searchUsersList() :
+            chatRoomsList()
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ChatRoomListTile extends StatefulWidget {
+  final String lastMessage, chatRoomId, myUsername;
+  const ChatRoomListTile(this.lastMessage, this.chatRoomId, this.myUsername,
+      {Key? key})
+      : super(key: key);
+
+  @override
+  _ChatRoomListTileState createState() => _ChatRoomListTileState();
+}
+
+class _ChatRoomListTileState extends State<ChatRoomListTile> {
+  String profilePicUrl = "", name = "", username = "";
+
+  getThisUserInfo() async {
+    username =
+        widget.chatRoomId.replaceAll(widget.myUsername, "").replaceAll("_", "");
+    QuerySnapshot querySnapshot = await DatabaseMethods().getUserInfo(username);
+    print(
+        "something bla bla ${querySnapshot.docs[0].id} ${querySnapshot.docs[0]["name"]}  ${querySnapshot.docs[0]["imgUrl"]}");
+    name = "${querySnapshot.docs[0]["name"]}";
+    profilePicUrl = "${querySnapshot.docs[0]["imgUrl"]}";
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    getThisUserInfo();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ChatScreen(username, name)));
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: CachedNetworkImage(
+                imageUrl: profilePicUrl,
+                placeholder: (context, url) =>
+                    const CircularProgressIndicator(),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
+                const SizedBox(height: 3),
+                Text(widget.lastMessage)
+              ],
+            )
+          ],
+        ),
+      ),
     );
   }
 }
