@@ -20,10 +20,10 @@ class _ChatScreenState extends State<ChatScreen> {
   TextEditingController messageTextEdittingController = TextEditingController();
 
   getMyInfoFromSharedPreference() async {
-    myName = (await SharedPreferenceHelper().getDisplayName())!;
-    myProfilePic = (await SharedPreferenceHelper().getUserProfileUrl())!;
-    myUserName = (await SharedPreferenceHelper().getUserName())!;
-    myEmail = (await SharedPreferenceHelper().getUserEmail())!;
+    myName = await SharedPreferenceHelper().getDisplayName();
+    myProfilePic = await SharedPreferenceHelper().getUserProfileUrl();
+    myUserName = await SharedPreferenceHelper().getUserName();
+    myEmail = await SharedPreferenceHelper().getUserEmail();
 
     chatRoomId = getChatRoomIdByUsernames(widget.chatWithUsername, myUserName!);
   }

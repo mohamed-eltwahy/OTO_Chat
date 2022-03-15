@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferenceHelper {
@@ -34,28 +36,57 @@ class SharedPreferenceHelper {
   }
 
   // get data
-  Future<String?> getUserName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(userNameKey);
+  Future<dynamic> getUserName() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      log('username ${prefs.getString(userNameKey)}');
+      return prefs.getString(userNameKey)!;
+    } catch (e) {
+      log('getUserName $e');
+    }
   }
 
-  Future<String?> getUserEmail() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(userEmailKey);
+  Future<dynamic> getUserEmail() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      log('getUserEmail ${prefs.getString(userEmailKey)}');
+
+      return prefs.getString(userEmailKey)!;
+    } catch (e) {
+      log("getUserEmail $e");
+    }
   }
 
-  Future<String?> getUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(userIdKey);
+  Future<dynamic> getUserId() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      log('getUserId ${prefs.getString(userIdKey)}');
+
+      return prefs.getString(userIdKey)!;
+    } catch (e) {
+      log("getUserId $e");
+    }
   }
 
-  Future<String?> getDisplayName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(displayNameKey);
+  Future<dynamic> getDisplayName() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      log('getDisplayName ${prefs.getString(displayNameKey)}');
+
+      return prefs.getString(displayNameKey)!;
+    } catch (e) {
+      log("getDisplayName $e");
+    }
   }
 
-  Future<String?> getUserProfileUrl() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(userProfilePicKey);
+  Future<dynamic> getUserProfileUrl() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      log('getUserProfileUrl ${prefs.getString(userProfilePicKey)}');
+
+      return prefs.getString(userProfilePicKey)!;
+    } catch (e) {
+      log("getUserProfileUrl $e");
+    }
   }
 }

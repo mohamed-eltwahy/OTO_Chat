@@ -18,8 +18,8 @@ class DatabaseMethods {
         .snapshots();
   }
 
-  Future addMessage(
-      String chatRoomId, String messageId,  Map<String,dynamic> messageInfoMap) async {
+  Future addMessage(String chatRoomId, String messageId,
+      Map<String, dynamic> messageInfoMap) async {
     return FirebaseFirestore.instance
         .collection("chatrooms")
         .doc(chatRoomId)
@@ -28,14 +28,16 @@ class DatabaseMethods {
         .set(messageInfoMap);
   }
 
-  updateLastMessageSend(String chatRoomId,  Map<String,dynamic> lastMessageInfoMap) {
+  updateLastMessageSend(
+      String chatRoomId, Map<String, dynamic> lastMessageInfoMap) {
     return FirebaseFirestore.instance
         .collection("chatrooms")
         .doc(chatRoomId)
         .update(lastMessageInfoMap);
   }
 
-  createChatRoom(String chatRoomId, Map<String,dynamic> chatRoomInfoMap) async {
+  createChatRoom(
+      String chatRoomId, Map<String, dynamic> chatRoomInfoMap) async {
     final snapShot = await FirebaseFirestore.instance
         .collection("chatrooms")
         .doc(chatRoomId)

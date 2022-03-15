@@ -1,16 +1,17 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:tel_chat/data/auth.dart';
+import 'package:tel_chat/data/database.dart';
 import 'package:tel_chat/layout/chat_screen.dart';
 import 'package:tel_chat/layout/signin.dart';
+import 'dart:developer';
 
-import '../data/auth.dart';
-import '../data/database.dart';
 import '../helper/sharedpref_helper.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
-
   @override
   _HomeState createState() => _HomeState();
 }
@@ -24,10 +25,10 @@ class _HomeState extends State<Home> {
       TextEditingController();
 
   getMyInfoFromSharedPreference() async {
-    myName = (await SharedPreferenceHelper().getDisplayName())!;
-    myProfilePic = (await SharedPreferenceHelper().getUserProfileUrl())!;
-    myUserName = (await SharedPreferenceHelper().getUserName())!;
-    myEmail = (await SharedPreferenceHelper().getUserEmail())!;
+    myName = await SharedPreferenceHelper().getDisplayName();
+    myProfilePic = await SharedPreferenceHelper().getUserProfileUrl();
+    myUserName = await SharedPreferenceHelper().getUserName();
+    myEmail = await SharedPreferenceHelper().getUserEmail();
     setState(() {});
   }
 
@@ -66,11 +67,10 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget searchListUserTile(
-      {required String profileUrl, name, username, email}) {
+  Widget searchListUserTile({String? profileUrl, name, username, email}) {
     return GestureDetector(
-      onTap: () async {
-        var chatRoomId = await getChatRoomIdByUsernames(myUserName!, username);
+      onTap: () {
+        var chatRoomId = getChatRoomIdByUsernames(myUserName!, username);
         Map<String, dynamic> chatRoomInfoMap = {
           "users": [myUserName, username]
         };
@@ -79,6 +79,10 @@ class _HomeState extends State<Home> {
             context,
             MaterialPageRoute(
                 builder: (context) => ChatScreen(username, name)));
+        setState(() {
+          isSearching = false;
+          searchUsernameEditingController.text = "";
+        });
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -87,7 +91,7 @@ class _HomeState extends State<Home> {
             ClipRRect(
               borderRadius: BorderRadius.circular(40),
               child: Image.network(
-                profileUrl,
+                profileUrl!,
                 height: 40,
                 width: 40,
               ),
@@ -134,7 +138,6 @@ class _HomeState extends State<Home> {
   onScreenLoaded() async {
     await getMyInfoFromSharedPreference();
     getChatRooms();
-    chatRoomsList();
   }
 
   @override
@@ -164,7 +167,7 @@ class _HomeState extends State<Home> {
       ),
       body: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
-        child: ListView(
+        child: Column(
           children: [
             Row(
               children: [
@@ -211,8 +214,7 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-            // isSearching ? searchUsersList() :
-            chatRoomsList()
+            isSearching ? searchUsersList() : chatRoomsList()
           ],
         ),
       ),
@@ -222,9 +224,7 @@ class _HomeState extends State<Home> {
 
 class ChatRoomListTile extends StatefulWidget {
   final String lastMessage, chatRoomId, myUsername;
-  const ChatRoomListTile(this.lastMessage, this.chatRoomId, this.myUsername,
-      {Key? key})
-      : super(key: key);
+  const ChatRoomListTile(this.lastMessage, this.chatRoomId, this.myUsername);
 
   @override
   _ChatRoomListTileState createState() => _ChatRoomListTileState();
@@ -234,13 +234,21 @@ class _ChatRoomListTileState extends State<ChatRoomListTile> {
   String profilePicUrl = "", name = "", username = "";
 
   getThisUserInfo() async {
-    username =
-        widget.chatRoomId.replaceAll(widget.myUsername, "").replaceAll("_", "");
-    QuerySnapshot querySnapshot = await DatabaseMethods().getUserInfo(username);
-    print(
-        "something bla bla ${querySnapshot.docs[0].id} ${querySnapshot.docs[0]["name"]}  ${querySnapshot.docs[0]["imgUrl"]}");
-    name = "${querySnapshot.docs[0]["name"]}";
-    profilePicUrl = "${querySnapshot.docs[0]["imgUrl"]}";
+    username = widget.chatRoomId
+        .replaceAll(widget.myUsername, "")
+        .replaceAll("_", "")
+        .trim();
+    log('USER $username');
+
+    QuerySnapshot? querySnapshot =
+        await DatabaseMethods().getUserInfo(username);
+    Map<dynamic, dynamic> userData = querySnapshot.docs[0].data() as Map;
+    log('ddddddddddd ${userData["name"].toString()}');
+    // log('imggggggggg ${userData["imgUrl"].toString()}');
+    //  log("something bla bla ${querySnapshot.docs[0].id} ${querySnapshot.docs[0]["name"]}  ${querySnapshot.docs[0]["imgUrl"]}");
+    name = "${userData["name"]}";
+    profilePicUrl = userData["imgUrl"].toString();
+    log('iiiiiiiiiiiii $profilePicUrl');
     setState(() {});
   }
 
@@ -263,22 +271,28 @@ class _ChatRoomListTileState extends State<ChatRoomListTile> {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: CachedNetworkImage(
-                imageUrl: profilePicUrl,
-                placeholder: (context, url) =>
-                    const CircularProgressIndicator(),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              ),
+            CachedNetworkImage(
+              width: 30,
+              height: 30,
+              imageUrl: profilePicUrl.toString(),
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
             ),
+            // ClipRRect(
+            //   borderRadius: BorderRadius.circular(30),
+            //   child: Image.network(
+            //     profilePicUrl,
+            //     height: 10,
+            //     width: 10,
+            //   ),
+            // ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                  style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 3),
                 Text(widget.lastMessage)

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -32,13 +34,13 @@ class AuthMethods {
         await _firebaseAuth.signInWithCredential(credential);
 
     User? userDetails = result.user;
-
-    SharedPreferenceHelper().saveUserEmail(userDetails!.email!);
-    SharedPreferenceHelper().saveUserId(userDetails.uid);
-    SharedPreferenceHelper()
+    log("userDetails $userDetails");
+   await SharedPreferenceHelper().saveUserEmail(userDetails!.email!);
+   await SharedPreferenceHelper().saveUserId(userDetails.uid);
+  await  SharedPreferenceHelper()
         .saveUserName(userDetails.email!.replaceAll("@gmail.com", ""));
-    SharedPreferenceHelper().saveDisplayName(userDetails.displayName!);
-    SharedPreferenceHelper().saveUserProfileUrl(userDetails.photoURL!);
+  await  SharedPreferenceHelper().saveDisplayName(userDetails.displayName!);
+  await  SharedPreferenceHelper().saveUserProfileUrl(userDetails.photoURL!);
 
     Map<String, dynamic> userInfoMap = {
       "email": userDetails.email,
@@ -51,7 +53,7 @@ class AuthMethods {
         .addUserInfoToDB(userDetails.uid, userInfoMap)
         .then((value) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => const Home()));
+          context, MaterialPageRoute(builder: (context) =>  Home()));
     });
   }
 
