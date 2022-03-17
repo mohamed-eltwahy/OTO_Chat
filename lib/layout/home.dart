@@ -271,13 +271,21 @@ class _ChatRoomListTileState extends State<ChatRoomListTile> {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            CachedNetworkImage(
-              width: 30,
-              height: 30,
-              imageUrl: profilePicUrl.toString(),
-              placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-            ),
+            profilePicUrl != null
+                ? CachedNetworkImage(
+                    width: 30,
+                    height: 30,
+                    imageUrl: profilePicUrl.toString(),
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  )
+                : Image.asset(
+                    'assets/user.jpg',
+                    width: 30,
+                    height: 30,
+                  ),
             // ClipRRect(
             //   borderRadius: BorderRadius.circular(30),
             //   child: Image.network(
