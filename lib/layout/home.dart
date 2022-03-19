@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:tel_chat/data/auth.dart';
@@ -271,29 +268,27 @@ class _ChatRoomListTileState extends State<ChatRoomListTile> {
         margin: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            profilePicUrl != null
-                ? CachedNetworkImage(
-                    width: 30,
-                    height: 30,
-                    imageUrl: profilePicUrl.toString(),
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
-                  )
-                : Image.asset(
-                    'assets/user.jpg',
-                    width: 30,
-                    height: 30,
-                  ),
-            // ClipRRect(
-            //   borderRadius: BorderRadius.circular(30),
-            //   child: Image.network(
-            //     profilePicUrl,
-            //     height: 10,
-            //     width: 10,
-            //   ),
-            // ),
+            Image.asset(
+              'assets/user.jpg',
+              width: 50,
+              height: 50,
+            ),
+            // profilePicUrl != null
+            //     ? CachedNetworkImage(
+            //         width: 30,
+            //         height: 30,
+            //         imageUrl: profilePicUrl.toString(),
+            //         placeholder: (context, url) =>
+            //             const CircularProgressIndicator(),
+            //         errorWidget: (context, url, error) =>
+            //             const Icon(Icons.error),
+            //       )
+            //     : Image.asset(
+            //         'assets/user.jpg',
+            //         width: 30,
+            //         height: 30,
+            //       ),
+
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
